@@ -7,11 +7,11 @@ services:
       - "8080:8080"
     environment:
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: <naic-admin-password>
+      KEYCLOAK_ADMIN_PASSWORD: <your-admin-password>
 
       # 1. Hostname Settings
       # Must match the domain you set up in Nginx/Certbot
-      KC_HOSTNAME: naic-kc.ashen.no
+      KC_HOSTNAME: your-keycloak-domain.com
 
       # 2. Enable HTTP (because Nginx talks to Keycloak via HTTP on localhost)
       KC_HTTP_ENABLED: "true"

@@ -1,9 +1,15 @@
 import type { UserManagerSettings } from 'oidc-client-ts';
 
+// Keycloak configuration from environment variables
+// To configure: Copy .env.example to .env and update with your Keycloak details
+const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL || 'https://your-keycloak-domain.com';
+const KEYCLOAK_REALM = import.meta.env.VITE_KEYCLOAK_REALM || 'your-realm-name';
+const KEYCLOAK_CLIENT_ID = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'your-client-id';
+
 const authConfig: UserManagerSettings = {
   // Authority URL - OIDC client will auto-discover endpoints from /.well-known/openid-configuration
-  authority: 'https://naic-kc.ashen.no/realms/naic-monitor',
-  client_id: 'naic-monitor-client', // Replace with your actual client ID
+  authority: `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}`,
+  client_id: KEYCLOAK_CLIENT_ID,
   redirect_uri: window.location.origin + '/auth/callback',
   post_logout_redirect_uri: window.location.origin + '/auth/logout',
   response_type: 'code',
