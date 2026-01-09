@@ -23,13 +23,13 @@ The app will run at `http://localhost:5173`
 
 ## Keycloak Authentication Setup
 
-> **Note**: This project uses Keycloak with SSL/HTTPS. Ensure the Keycloak server is accessible at `https://naic-kc.ashen.no`. See [../docker-keycloak/README.md](../docker-keycloak/README.md) for Keycloak setup.
+> **Note**: This project uses Keycloak with SSL/HTTPS. Ensure your Keycloak server is accessible via HTTPS. See [../docker-keycloak/README.md](../docker-keycloak/README.md) for Keycloak setup.
 
 ### 1. Configure Keycloak Client
 
 Log into Keycloak Admin Console and configure your client with these settings:
 
-**Client ID**: `naic-monitor-client` (or your custom client ID)
+**Client ID**: `your-client-id`
 
 **Important Client Settings:**
 - **Access Type**: Public
@@ -37,27 +37,29 @@ Log into Keycloak Admin Console and configure your client with these settings:
 - **Valid Redirect URIs**:
   - `http://localhost:5173/auth/callback` (development)
   - `http://localhost:5173/*` (development wildcard)
-  - For production, add your production domain with HTTPS
+  - `https://your-production-domain.com/auth/callback` (production)
 - **Valid Post Logout Redirect URIs**:
   - `http://localhost:5173/auth/logout` (development)
   - `http://localhost:5173/` (development home)
+  - `https://your-production-domain.com/auth/logout` (production)
 - **Web Origins**: ⚠️ **CRITICAL - Required to prevent CORS errors**
   - `http://localhost:5173` (for development)
   - Or `*` for development (allows all origins)
-  - For production, add your production domain
+  - `https://your-production-domain.com` (for production)
 - **PKCE Code Challenge Method**: S256
 
 ### 2. Update Configuration
 
-If your client ID is different, update it in `src/auth/authConfig.ts`:
+Create a `.env` file in the frontend directory (copy from `.env.example`):
 
-```typescript
-const authConfig: UserManagerSettings = {
-  authority: 'https://naic-kc.ashen.no/realms/naic-monitor',
-  client_id: 'your-client-id', // Update this
-  // ... other settings
-};
+```env
+VITE_KEYCLOAK_URL=https://your-keycloak-domain.com
+VITE_KEYCLOAK_REALM=your-realm
+VITE_KEYCLOAK_CLIENT_ID=your-client-id
+VITE_BACKEND_API_URL=http://localhost:8000
 ```
+
+The configuration in [authConfig.ts](src/auth/authConfig.ts) will automatically use these environment variables.
 
 ### 3. Test Authentication Flow
 
@@ -134,21 +136,24 @@ The axios instance automatically:
 - Handles errors with detailed messages
 - Supports GET, POST, PUT, DELETE, PATCH methods
 
-## Environment Variables (Optional)
+## Environment Variables
 
-Create a `.env` file for different environments:
+The application uses environment variables for configuration. Copy [.env.example](.env.example) to `.env` and update with your values:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your Keycloak configuration:
 
 ```env
-VITE_KEYCLOAK_URL=https://naic-kc.ashen.no
-VITE_KEYCLOAK_REALM=naic-monitor
-VITE_KEYCLOAK_CLIENT_ID=naic-monitor-client
+VITE_KEYCLOAK_URL=https://your-keycloak-domain.com
+VITE_KEYCLOAK_REALM=your-realm
+VITE_KEYCLOAK_CLIENT_ID=your-client-id
+VITE_BACKEND_API_URL=http://localhost:8000
 ```
 
-Then update `authConfig.ts` to use environment variables:
-```typescript
-authority: `${import.meta.env.VITE_KEYCLOAK_URL}/realms/${import.meta.env.VITE_KEYCLOAK_REALM}`
-client_id: import.meta.env.VITE_KEYCLOAK_CLIENT_ID
-```
+The configuration in [authConfig.ts](src/auth/authConfig.ts) automatically loads these values.
 
 ## Troubleshooting
 
@@ -162,9 +167,9 @@ This is the most common error when setting up authentication. It occurs during t
 - Shows "Authentication Error: Failed to fetch"
 
 **Solution:**
-1. Log into Keycloak Admin Console: `https://naic-kc.ashen.no/admin`
-2. Select realm: `naic-monitor`
-3. Go to **Clients** → click `naic-monitor-client`
+1. Log into Keycloak Admin Console: `https://your-keycloak-domain.com/admin`
+2. Select your realm (e.g., `your-realm`)
+3. Go to **Clients** → click your client ID
 4. Scroll down to **Web Origins**
 5. Add: `http://localhost:5173` (or `*` for development)
 6. Click **Save**
@@ -179,7 +184,7 @@ This is the most common error when setting up authentication. It occurs during t
 
 ### SSL Certificate Errors
 - If you see SSL errors, verify certificates are valid: `sudo certbot certificates`
-- Check that the Keycloak URL uses HTTPS: `https://naic-kc.ashen.no`
+- Check that the Keycloak URL uses HTTPS in your `.env` file
 - Visit the Keycloak URL in your browser and accept the certificate if it's self-signed
 
 ### Token Not Being Sent

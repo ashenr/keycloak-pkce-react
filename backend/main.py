@@ -6,6 +6,7 @@ import jwt
 from jwt import PyJWKClient
 from typing import Optional, Dict, Any
 import logging
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Keycloak Protected API")
 
-# Keycloak configuration
-KEYCLOAK_URL = "https://naic-kc.ashen.no"
-REALM = "naic-monitor"
+# Load configuration from environment variables
+KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", "https://your-keycloak-domain.com")
+REALM = os.getenv("KEYCLOAK_REALM", "your-realm")
 JWKS_URL = f"{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/certs"
 ISSUER = f"{KEYCLOAK_URL}/realms/{REALM}"
 
@@ -26,9 +27,13 @@ jwks_client = PyJWKClient(JWKS_URL)
 security = HTTPBearer()
 
 # CORS configuration - allow Frontend
+# Parse CORS origins from environment variable (comma-separated list)
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+cors_origins = [origin.strip() for origin in cors_origins_str.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend URL
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

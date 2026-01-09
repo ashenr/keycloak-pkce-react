@@ -3,7 +3,8 @@ import type { AxiosInstance, AxiosRequestConfig } from 'axios'
 import { useAuth } from '../auth/AuthContext';
 import { useMemo } from 'react';
 
-const API_BASE_URL = 'http://localhost:8000';
+// Load backend API URL from environment variables
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8000';
 
 export const useApi = () => {
   const { getAccessToken } = useAuth();

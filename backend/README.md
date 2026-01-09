@@ -20,7 +20,23 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Run the Server
+### 2. Configure Environment Variables
+
+Create a `.env` file in the backend directory (copy from `.env.example`):
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your Keycloak configuration:
+
+```env
+KEYCLOAK_URL=https://your-keycloak-domain.com
+KEYCLOAK_REALM=your-realm
+CORS_ORIGINS=http://localhost:5173
+```
+
+### 3. Run the Server
 
 ```bash
 python main.py
@@ -34,7 +50,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 The API will be available at `http://localhost:8000`
 
-### 3. API Documentation
+### 4. API Documentation
 
 FastAPI provides automatic interactive documentation:
 - **Swagger UI**: http://localhost:8000/docs
@@ -153,9 +169,10 @@ curl -X POST \
 
 ## Configuration
 
-Update these values in `main.py` if your Keycloak setup differs:
+The application uses environment variables for configuration. See `.env.example` for available options:
 
-```python
-KEYCLOAK_URL = "http://158.39.75.110"
-REALM = "naic-monitor"
-```
+- `KEYCLOAK_URL` - Your Keycloak server URL (e.g., `https://your-keycloak-domain.com`)
+- `KEYCLOAK_REALM` - Your Keycloak realm name
+- `CORS_ORIGINS` - Comma-separated list of allowed origins (e.g., `http://localhost:5173,https://your-frontend-domain.com`)
+
+The configuration is loaded in [main.py](main.py) using environment variables.
