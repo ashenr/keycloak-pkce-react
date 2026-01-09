@@ -4,23 +4,51 @@ A Python FastAPI REST API with Keycloak JWT authentication.
 
 ## Setup
 
-### 1. Install Dependencies
+### 1. Configure Environment Variables
+
+Create a `.env` file in the `backend` directory:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set your Keycloak configuration:
+
+```env
+# Keycloak server URL (use HTTPS in production)
+KEYCLOAK_URL=https://your-keycloak-domain.com
+
+# Keycloak realm name
+KEYCLOAK_REALM=your-realm-name
+
+# CORS allowed origins (comma-separated for multiple origins)
+CORS_ORIGINS=http://localhost:5173
+```
+
+For local development with Keycloak running on localhost:
+```env
+KEYCLOAK_URL=http://localhost:8080
+KEYCLOAK_REALM=your-realm-name
+CORS_ORIGINS=http://localhost:5173
+```
+
+### 2. Install Dependencies
 
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-Or using a virtual environment:
+Or using a virtual environment (recommended):
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Run the Server
+### 3. Run the Server
 
 ```bash
 python main.py
@@ -34,7 +62,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 The API will be available at `http://localhost:8000`
 
-### 3. API Documentation
+### 4. API Documentation
 
 FastAPI provides automatic interactive documentation:
 - **Swagger UI**: http://localhost:8000/docs
@@ -153,9 +181,32 @@ curl -X POST \
 
 ## Configuration
 
-Update these values in `main.py` if your Keycloak setup differs:
+The backend uses environment variables for configuration. Create a `.env` file (see `.env.example`):
+
+**Available Variables:**
+
+```env
+# Keycloak server URL (required)
+KEYCLOAK_URL=https://your-keycloak-domain.com
+
+# Keycloak realm name (required)
+KEYCLOAK_REALM=your-realm-name
+
+# CORS allowed origins (optional, defaults to http://localhost:5173)
+# Use comma-separated list for multiple origins
+CORS_ORIGINS=http://localhost:5173,https://your-production-domain.com
+```
+
+**Hardcoding Configuration (not recommended):**
+
+If you prefer not to use environment variables, you can update the values directly in `main.py`:
 
 ```python
-KEYCLOAK_URL = "http://158.39.75.110"
-REALM = "naic-monitor"
+KEYCLOAK_URL = "https://your-keycloak-domain.com"
+REALM = "your-realm-name"
 ```
+
+However, using environment variables is recommended for:
+- Security (credentials not in code)
+- Flexibility (easy to change per environment)
+- Best practices (12-factor app methodology)

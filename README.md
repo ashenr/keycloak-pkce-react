@@ -10,7 +10,7 @@ A complete authentication solution using Keycloak with PKCE (Proof Key for Code 
 │  Frontend   │◄───────►│    Server    │         │   Backend   │
 │ (Port 5173) │  HTTPS  │  + Nginx SSL │         │ (Port 8000) │
 └─────────────┘         └──────────────┘         └─────────────┘
-                          (naic-kc.ashen.no)             ▲
+              (your-keycloak-domain.com)                 ▲
                                                          │
                                                     JWT Token
                                                     Validation
@@ -77,9 +77,9 @@ sequenceDiagram
 
 3. **Authorization Request** (Frontend → Keycloak):
    ```
-   GET https://naic-kc.ashen.no/realms/naic-monitor/protocol/openid-connect/auth
+   GET https://your-keycloak-domain.com/realms/your-realm/protocol/openid-connect/auth
    Parameters:
-   - client_id: naic-monitor-client
+   - client_id: your-client-id
    - redirect_uri: http://localhost:5173/auth/callback
    - response_type: code
    - scope: openid profile email
@@ -99,12 +99,12 @@ sequenceDiagram
 
 6. **Token Exchange** (Frontend → Keycloak):
    ```
-   POST https://naic-kc.ashen.no/realms/naic-monitor/protocol/openid-connect/token
+   POST https://your-keycloak-domain.com/realms/your-realm/protocol/openid-connect/token
    Body:
    - grant_type: authorization_code
    - code: {auth_code}
    - redirect_uri: http://localhost:5173/auth/callback
-   - client_id: naic-monitor-client
+   - client_id: your-client-id
    - code_verifier: {original_verifier}
    ```
 
@@ -135,7 +135,7 @@ sequenceDiagram
    - Fetch Keycloak's public keys (JWKS)
    - Verify JWT signature using RS256
    - Validate claims:
-     * `iss` (issuer): https://naic-kc.ashen.no/realms/naic-monitor
+     * `iss` (issuer): https://your-keycloak-domain.com/realms/your-realm
      * `aud` (audience): account
      * `exp` (expiration): not expired
      * `iat` (issued at): valid time
@@ -159,11 +159,11 @@ sequenceDiagram
 
 2. **Silent Refresh** (Frontend → Keycloak):
    ```
-   POST https://naic-kc.ashen.no/realms/naic-monitor/protocol/openid-connect/token
+   POST https://your-keycloak-domain.com/realms/your-realm/protocol/openid-connect/token
    Body:
    - grant_type: refresh_token
    - refresh_token: {refresh_token}
-   - client_id: naic-monitor-client
+   - client_id: your-client-id
    ```
 
 3. **New Tokens** (Keycloak → Frontend):
@@ -177,7 +177,7 @@ sequenceDiagram
 
 2. **Logout Request** (Frontend → Keycloak):
    ```
-   GET https://naic-kc.ashen.no/realms/naic-monitor/protocol/openid-connect/logout
+   GET https://your-keycloak-domain.com/realms/your-realm/protocol/openid-connect/logout
    Parameters:
    - id_token_hint: {id_token}
    - post_logout_redirect_uri: http://localhost:5173/auth/logout
@@ -217,8 +217,31 @@ sequenceDiagram
 ### Prerequisites
 - Node.js 18+
 - Python 3.9+
-- Keycloak server running at `https://naic-kc.ashen.no`
-- SSL certificates configured (see [docker-keycloak/SSL_SETUP.md](docker-keycloak/SSL_SETUP.md))
+- Keycloak server running (see [docker-keycloak/ReadMe.md](docker-keycloak/ReadMe.md) for setup)
+- SSL certificates configured for production (see [docker-keycloak/ReadMe.md](docker-keycloak/ReadMe.md))
+
+### Configuration
+
+Before starting, you need to configure your Keycloak connection details:
+
+1. **Frontend Configuration**:
+   ```bash
+   cd frontend
+   cp .env.example .env
+   # Edit .env and set your Keycloak URL, realm, and client ID
+   ```
+
+2. **Backend Configuration**:
+   ```bash
+   cd backend
+   cp .env.example .env
+   # Edit .env and set your Keycloak URL and realm
+   ```
+
+3. **Keycloak Docker Configuration**:
+   - Edit `docker-keycloak/docker-compose.yml`
+   - Update `KC_HOSTNAME` with your domain
+   - Update `KEYCLOAK_ADMIN_PASSWORD` with a secure password
 
 ### 1. Frontend Setup
 
@@ -243,9 +266,9 @@ python main.py
 API available at: http://localhost:8000
 API Docs: http://localhost:8000/docs
 
-### 3. Keycloak Configuration (Already Set Up)
+### 3. Keycloak Configuration
 
-**Client Settings** (naic-monitor-client):
+**Client Settings** (configure in Keycloak Admin Console):
 - Client Protocol: openid-connect
 - Access Type: Public
 - Standard Flow: ON
@@ -256,6 +279,9 @@ API Docs: http://localhost:8000/docs
   - `http://localhost:5173/auth/logout`
   - `http://localhost:5173/`
 - Web Origins: `http://localhost:5173`
+- PKCE Code Challenge Method: S256
+
+For detailed Keycloak setup instructions, see [docker-keycloak/ReadMe.md](docker-keycloak/ReadMe.md).
 
 ## 📁 Project Structure
 

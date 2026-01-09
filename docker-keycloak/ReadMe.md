@@ -5,7 +5,7 @@ This directory contains the Docker Compose configuration for running Keycloak wi
 ## Prerequisites
 
 - Docker and Docker Compose
-- A domain name pointed to your server (e.g., `naic-kc.ashen.no`)
+- A domain name pointed to your server (e.g., `your-keycloak-domain.com`)
 - Nginx (for SSL termination)
 - Root or sudo access to the server
 
@@ -21,7 +21,20 @@ Nginx handles the SSL/TLS encryption and forwards requests to Keycloak over HTTP
 
 ## Quick Start
 
-### 1. Start Keycloak
+### 1. Configure Keycloak
+
+Before starting, edit the `docker-compose.yml` file and update these values:
+
+```yaml
+environment:
+  # Update with a strong admin password
+  KEYCLOAK_ADMIN_PASSWORD: <your-admin-password>
+  
+  # Update with your actual domain name
+  KC_HOSTNAME: your-keycloak-domain.com
+```
+
+### 2. Start Keycloak
 
 Run the following command from the `docker-keycloak` directory:
 
@@ -31,7 +44,7 @@ docker compose up -d
 
 This will start Keycloak on `http://localhost:8080` (accessible only from localhost).
 
-### 2. Wait for Keycloak to Start
+### 3. Wait for Keycloak to Start
 
 Give Keycloak a minute to fully start up. You can check the logs with:
 
@@ -39,13 +52,13 @@ Give Keycloak a minute to fully start up. You can check the logs with:
 docker compose logs -f keycloak
 ```
 
-### 3. Access Keycloak
+### 4. Access Keycloak
 
-**Production (via HTTPS):**
-- **URL**: https://naic-kc.ashen.no
-- **Admin Console**: https://naic-kc.ashen.no/admin
+**Production (via HTTPS - after SSL setup):**
+- **URL**: https://your-keycloak-domain.com
+- **Admin Console**: https://your-keycloak-domain.com/admin
 - **Admin Username**: admin
-- **Admin Password**: <naic-admin-password>
+- **Admin Password**: (the password you set in docker-compose.yml)
 
 **Local Development (Docker host only):**
 - **URL**: http://localhost:8080
@@ -57,7 +70,7 @@ docker compose logs -f keycloak
 
 ### Prerequisites
 
-- A domain name pointing to your server (e.g., `naic-kc.ashen.no`)
+- A domain name pointing to your server (e.g., `your-keycloak-domain.com`)
 - Keycloak running via Docker Compose
 - Root or sudo access to the server
 
@@ -81,15 +94,15 @@ sudo systemctl status nginx
 Create a new Nginx configuration file for your domain:
 
 ```bash
-sudo nano /etc/nginx/sites-available/naic-kc.ashen.no
+sudo nano /etc/nginx/sites-available/your-keycloak-domain.com
 ```
 
-Add the following configuration:
+Add the following configuration (replace `your-keycloak-domain.com` with your actual domain):
 
 ```nginx
 server {
     listen 80;
-    server_name naic-kc.ashen.no;
+    server_name your-keycloak-domain.com;
 
     location / {
         proxy_pass http://localhost:8080;
@@ -113,7 +126,7 @@ This configuration:
 Create a symbolic link to enable the site:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/naic-kc.ashen.no /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/your-keycloak-domain.com /etc/nginx/sites-enabled/
 ```
 
 Test the Nginx configuration:
@@ -168,7 +181,7 @@ Follow the prompts:
 1. Enter your email address for renewal notifications
 2. Agree to the Terms of Service
 3. Choose whether to share your email with EFF
-4. Select your domain (`naic-kc.ashen.no`)
+4. Select your domain (e.g., `your-keycloak-domain.com`)
 5. Choose whether to redirect HTTP to HTTPS (recommended: yes)
 
 Certbot will:
@@ -180,7 +193,7 @@ After completion, your Nginx configuration will look similar to:
 
 ```nginx
 server {
-    server_name naic-kc.ashen.no;
+    server_name your-keycloak-domain.com;
 
     location / {
         proxy_pass http://localhost:8080;
@@ -191,19 +204,19 @@ server {
     }
 
     listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/naic-kc.ashen.no/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/naic-kc.ashen.no/privkey.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/your-keycloak-domain.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/your-keycloak-domain.com/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 }
 
 server {
-    if ($host = naic-kc.ashen.no) {
+    if ($host = your-keycloak-domain.com) {
         return 301 https://$host$request_uri;
     } # managed by Certbot
 
     listen 80;
-    server_name naic-kc.ashen.no;
+    server_name your-keycloak-domain.com;
     return 404; # managed by Certbot
 }
 ```
@@ -234,7 +247,7 @@ The `docker-compose.yml` is configured to work with the Nginx reverse proxy:
 ```yaml
 environment:
   # Must match your domain
-  KC_HOSTNAME: naic-kc.ashen.no
+  KC_HOSTNAME: your-keycloak-domain.com
   
   # Enable HTTP (Nginx will handle HTTPS)
   KC_HTTP_ENABLED: "true"
@@ -255,9 +268,9 @@ docker compose up -d
 
 ### Verification
 
-1. Access Keycloak at `https://naic-kc.ashen.no`
+1. Access Keycloak at `https://your-keycloak-domain.com`
 2. Verify the SSL certificate is valid (check for the padlock icon in your browser)
-3. Try accessing `http://naic-kc.ashen.no` and verify it redirects to HTTPS
+3. Try accessing `http://your-keycloak-domain.com` and verify it redirects to HTTPS
 4. Check that the Keycloak login page loads correctly
 
 ---
@@ -307,7 +320,7 @@ docker run --rm -v keycloak-data:/data -v $(pwd):/backup alpine tar xzf /backup/
 ### SSL Certificate Issues
 1. Verify certificate is valid: `sudo certbot certificates`
 2. Test renewal: `sudo certbot renew --dry-run`
-3. Check certificate files exist in `/etc/letsencrypt/live/naic-kc.ashen.no/`
+3. Check certificate files exist in `/etc/letsencrypt/live/your-keycloak-domain.com/`
 
 ### Nginx won't start
 - Check configuration: `sudo nginx -t`
@@ -317,7 +330,7 @@ docker run --rm -v keycloak-data:/data -v $(pwd):/backup alpine tar xzf /backup/
 ### Certbot fails
 - Ensure port 80 is accessible from the internet
 - Check firewall rules: `sudo ufw status`
-- Verify DNS points to your server: `nslookup naic-kc.ashen.no`
+- Verify DNS points to your server: `nslookup your-keycloak-domain.com`
 
 ### Redirect or Login Issues
 1. Verify `KC_HOSTNAME` matches your domain exactly in `docker-compose.yml`
@@ -351,7 +364,7 @@ docker run --rm -v keycloak-data:/data -v $(pwd):/backup alpine tar xzf /backup/
 - **Issuer**: Let's Encrypt
 - **Validity**: 90 days
 - **Renewal**: Automatic (via cron job)
-- **Location**: `/etc/letsencrypt/live/naic-kc.ashen.no/`
+- **Location**: `/etc/letsencrypt/live/your-keycloak-domain.com/`
 
 ## Additional Resources
 
