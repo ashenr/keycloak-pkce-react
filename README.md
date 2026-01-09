@@ -220,6 +220,8 @@ sequenceDiagram
 - Keycloak server running (see [docker-keycloak/ReadMe.md](docker-keycloak/ReadMe.md) for setup)
 - SSL certificates configured for production (see [docker-keycloak/ReadMe.md](docker-keycloak/ReadMe.md))
 
+> **📖 For detailed configuration instructions, see [CONFIGURATION.md](CONFIGURATION.md)**
+
 ### Configuration
 
 Before starting, you need to configure your Keycloak connection details:
