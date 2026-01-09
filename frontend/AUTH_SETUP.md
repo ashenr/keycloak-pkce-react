@@ -1,5 +1,7 @@
 # Keycloak PKCE Authentication Setup
 
+> **Note**: This project uses Keycloak with SSL/HTTPS. Ensure the Keycloak server is accessible at `https://naic-kc.ashen.no`. See [../docker-keycloak/SSL_SETUP.md](../docker-keycloak/SSL_SETUP.md) for SSL configuration details.
+
 ## Configuration Steps
 
 ### 1. Update Keycloak Client Configuration
@@ -9,9 +11,13 @@ In your `authConfig.ts`, replace `'naic-monitor-client'` with your actual Keyclo
 **Important Keycloak Client Settings:**
 - **Access Type**: Public
 - **Standard Flow Enabled**: ON
-- **Valid Redirect URIs**: 
-  - `http://localhost:5173/callback`
-  - `http://localhost:5173/*` (for development)
+- **Valid Redirect URIs**:
+  - `http://localhost:5173/auth/callback` (development)
+  - `http://localhost:5173/*` (development wildcard)
+  - For production, add your production domain with HTTPS
+- **Valid Post Logout Redirect URIs**:
+  - `http://localhost:5173/auth/logout` (development)
+  - `http://localhost:5173/` (development home)
 - **Web Origins**: `http://localhost:5173` (or `*` for development)
 - **PKCE Code Challenge Method**: S256
 
@@ -93,7 +99,7 @@ The axios instance automatically:
 Create a `.env` file for different environments:
 
 ```env
-VITE_KEYCLOAK_URL=http://158.39.75.110
+VITE_KEYCLOAK_URL=https://naic-kc.ashen.no
 VITE_KEYCLOAK_REALM=naic-monitor
 VITE_KEYCLOAK_CLIENT_ID=naic-monitor-client
 ```
@@ -105,8 +111,39 @@ authority: `${import.meta.env.VITE_KEYCLOAK_URL}/realms/${import.meta.env.VITE_K
 
 ## Next Steps
 
-1. **Update client_id** in `src/auth/authConfig.ts`
-2. **Configure Keycloak client** with correct redirect URIs
-3. **Test the authentication flow**
-4. **Implement protected routes** (optional)
-5. **Add API integration** with Bearer token
+1. **Ensure SSL is configured** - See [../docker-keycloak/SSL_SETUP.md](../docker-keycloak/SSL_SETUP.md)
+2. **Update client_id** in `src/auth/authConfig.ts`
+3. **Configure Keycloak client** with correct redirect URIs (both HTTP for local dev and HTTPS for production)
+4. **Test the authentication flow** locally and in production
+5. **Implement protected routes** (optional)
+6. **Add API integration** with Bearer token
+
+## Troubleshooting
+
+### CORS Errors ("Failed to fetch" during authentication)
+This is the most common error when setting up authentication. It occurs during the token exchange step.
+
+**Symptoms:**
+- Authentication redirects to Keycloak successfully
+- Login completes
+- Redirects back to your app
+- Shows "Authentication Error: Failed to fetch"
+
+**Solution:**
+1. Log into Keycloak Admin Console: `https://naic-kc.ashen.no/admin`
+2. Select realm: `naic-monitor`
+3. Go to **Clients** → click `naic-monitor-client`
+4. Scroll down to **Web Origins**
+5. Add: `http://localhost:5173` (or `*` for development)
+6. Click **Save**
+7. Try authenticating again
+
+**Why this happens:** When the frontend tries to POST to Keycloak's token endpoint to exchange the authorization code for tokens, the browser enforces CORS. Without the Web Origins setting, Keycloak doesn't send the proper CORS headers and the browser blocks the request.
+
+### Redirect URI Mismatch
+- Verify the redirect URIs in Keycloak match exactly with your app
+- Check both `redirect_uri` and `post_logout_redirect_uri` in `authConfig.ts`
+
+### SSL Certificate Errors
+- If you see SSL errors, verify certificates are valid: `sudo certbot certificates`
+- Check that the Keycloak URL uses HTTPS: `https://naic-kc.ashen.no`

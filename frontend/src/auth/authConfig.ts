@@ -2,7 +2,7 @@ import type { UserManagerSettings } from 'oidc-client-ts';
 
 const authConfig: UserManagerSettings = {
   // Authority URL - OIDC client will auto-discover endpoints from /.well-known/openid-configuration
-  authority: 'http://158.39.75.110/realms/naic-monitor',
+  authority: 'https://naic-kc.ashen.no/realms/naic-monitor',
   client_id: 'naic-monitor-client', // Replace with your actual client ID
   redirect_uri: window.location.origin + '/auth/callback',
   post_logout_redirect_uri: window.location.origin + '/auth/logout',

@@ -8,9 +8,9 @@ A complete authentication solution using Keycloak with PKCE (Proof Key for Code 
 ┌─────────────┐         ┌──────────────┐         ┌─────────────┐
 │   React     │         │   Keycloak   │         │   FastAPI   │
 │  Frontend   │◄───────►│    Server    │         │   Backend   │
-│ (Port 5173) │         │              │         │ (Port 8000) │
+│ (Port 5173) │  HTTPS  │  + Nginx SSL │         │ (Port 8000) │
 └─────────────┘         └──────────────┘         └─────────────┘
-                                                         ▲
+                          (naic-kc.ashen.no)             ▲
                                                          │
                                                     JWT Token
                                                     Validation
@@ -28,24 +28,24 @@ sequenceDiagram
     Note over F: 1. User clicks "Sign In"
     F->>F: Generate code_verifier (random)
     F->>F: Generate code_challenge = SHA256(code_verifier)
-    
+
     Note over F,K: 2. Authorization Request
     F->>K: Authorization Request<br/>(code_challenge, code_challenge_method=S256)
     K->>U: Show Login Page
     U->>K: Enter credentials
-    
+
     Note over K,F: 3. Authorization Response
     K->>F: Authorization Code (redirect to /auth/callback)
-    
+
     Note over F,K: 4. Token Exchange
     F->>K: Token Request<br/>(authorization_code + code_verifier)
     K->>K: Verify code_verifier matches code_challenge
     K->>F: Access Token + ID Token + Refresh Token
-    
+
     Note over F: 5. Store tokens & user info
     F->>F: Save tokens in memory
     F->>U: Show authenticated UI
-    
+
     Note over F,B: 6. API Request
     U->>F: Click "Test API"
     F->>B: API Request<br/>Authorization: Bearer {access_token}
@@ -54,7 +54,7 @@ sequenceDiagram
     B->>B: Validate JWT signature & claims
     B->>F: Protected data
     F->>U: Display result
-    
+
     Note over F,K: 7. Logout
     U->>F: Click "Sign Out"
     F->>K: Logout Request
@@ -77,7 +77,7 @@ sequenceDiagram
 
 3. **Authorization Request** (Frontend → Keycloak):
    ```
-   GET /realms/naic-monitor/protocol/openid-connect/auth
+   GET https://naic-kc.ashen.no/realms/naic-monitor/protocol/openid-connect/auth
    Parameters:
    - client_id: naic-monitor-client
    - redirect_uri: http://localhost:5173/auth/callback
@@ -99,7 +99,7 @@ sequenceDiagram
 
 6. **Token Exchange** (Frontend → Keycloak):
    ```
-   POST /realms/naic-monitor/protocol/openid-connect/token
+   POST https://naic-kc.ashen.no/realms/naic-monitor/protocol/openid-connect/token
    Body:
    - grant_type: authorization_code
    - code: {auth_code}
@@ -135,7 +135,7 @@ sequenceDiagram
    - Fetch Keycloak's public keys (JWKS)
    - Verify JWT signature using RS256
    - Validate claims:
-     * `iss` (issuer): http://158.39.75.110/realms/naic-monitor
+     * `iss` (issuer): https://naic-kc.ashen.no/realms/naic-monitor
      * `aud` (audience): account
      * `exp` (expiration): not expired
      * `iat` (issued at): valid time
@@ -159,7 +159,7 @@ sequenceDiagram
 
 2. **Silent Refresh** (Frontend → Keycloak):
    ```
-   POST /realms/naic-monitor/protocol/openid-connect/token
+   POST https://naic-kc.ashen.no/realms/naic-monitor/protocol/openid-connect/token
    Body:
    - grant_type: refresh_token
    - refresh_token: {refresh_token}
@@ -177,7 +177,7 @@ sequenceDiagram
 
 2. **Logout Request** (Frontend → Keycloak):
    ```
-   GET /realms/naic-monitor/protocol/openid-connect/logout
+   GET https://naic-kc.ashen.no/realms/naic-monitor/protocol/openid-connect/logout
    Parameters:
    - id_token_hint: {id_token}
    - post_logout_redirect_uri: http://localhost:5173/auth/logout
@@ -217,7 +217,8 @@ sequenceDiagram
 ### Prerequisites
 - Node.js 18+
 - Python 3.9+
-- Keycloak server running at `http://158.39.75.110`
+- Keycloak server running at `https://naic-kc.ashen.no`
+- SSL certificates configured (see [docker-keycloak/SSL_SETUP.md](docker-keycloak/SSL_SETUP.md))
 
 ### 1. Frontend Setup
 

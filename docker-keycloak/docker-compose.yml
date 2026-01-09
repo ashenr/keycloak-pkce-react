@@ -9,12 +9,25 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: <naic-admin-password>
 
-      # HTTP + relaxed hostname settings for dev
+      # 1. Hostname Settings
+      # Must match the domain you set up in Nginx/Certbot
+      KC_HOSTNAME: naic-kc.ashen.no
+
+      # 2. Enable HTTP (because Nginx talks to Keycloak via HTTP on localhost)
       KC_HTTP_ENABLED: "true"
+
+      # 3. Proxy Configuration
+      # Tells Keycloak to look at the headers Nginx sends (X-Forwarded-Proto)
+      # to understand it is actually running on HTTPS.
+      KC_PROXY_HEADERS: "xforwarded"
+
+      # Optional: Relax strictness if you run into specific dev issues,
+      # but with the settings above, strict is usually fine.
       KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "false"
+
     command:
       - start-dev
+      - --http-enabled=true # Ensures HTTP listener is on for Nginx
     volumes:
       - keycloak-data:/opt/keycloak/data
 

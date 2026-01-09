@@ -1,24 +1,42 @@
-# Keycloak Docker Setup
+# Keycloak Docker Setup with SSL
 
-This directory contains the Docker Compose configuration for running Keycloak in the VM.
+This directory contains the Docker Compose configuration for running Keycloak in the VM with SSL/HTTPS support via Nginx reverse proxy.
 
 ## Prerequisites
 
-- Docker
+- Docker and Docker Compose
+- A domain name pointed to your server (e.g., `naic-kc.ashen.no`)
+- Nginx installed and configured as reverse proxy
+- SSL certificates (Let's Encrypt via Certbot)
+
+## Architecture
+
+```
+Internet (HTTPS) → Nginx (SSL) → Keycloak Docker (HTTP localhost:8080)
+```
 
 ## Getting Started
 
-### 1. Start Keycloak
+### 1. Set Up SSL (First Time Only)
 
-Run the following command from the `docker` directory:
+If you haven't set up SSL yet, follow the complete guide in [SSL_SETUP.md](SSL_SETUP.md).
+
+This includes:
+- Installing and configuring Nginx
+- Obtaining SSL certificates with Certbot
+- Setting up automatic certificate renewal
+
+### 2. Start Keycloak
+
+Run the following command from the `docker-keycloak` directory:
 
 ```sh
 docker compose up -d
 ```
 
-This will start Keycloak on `http://localhost:8080`.
+This will start Keycloak on `http://localhost:8080` (accessible only from localhost).
 
-### 2. Wait for Keycloak to Start
+### 3. Wait for Keycloak to Start
 
 Give Keycloak a minute to fully start up. You can check the logs with:
 
@@ -26,34 +44,28 @@ Give Keycloak a minute to fully start up. You can check the logs with:
 docker compose logs -f keycloak
 ```
 
-### 3. Configure SSL Requirements
+### 4. Configuration Notes
 
-By default, Keycloak requires SSL for production use. For development, you need to disable this requirement on the master realm.
+The `docker-compose.yml` is configured to work with the Nginx reverse proxy:
 
-#### Log in with kcadm.sh
+- **KC_HOSTNAME**: Set to `naic-kc.ashen.no` (your domain)
+- **KC_HTTP_ENABLED**: `true` (Nginx handles HTTPS)
+- **KC_PROXY_HEADERS**: `xforwarded` (trusts X-Forwarded-* headers from Nginx)
+- **KC_HOSTNAME_STRICT**: `false` (allows reverse proxy setup)
 
-```sh
-docker exec -it keycloak \
-  /opt/keycloak/bin/kcadm.sh config credentials \
-  --server http://localhost:8080 \
-  --realm master \
-  --user admin \
-  --password <naic-admin-password>
-```
-
-#### Update the Realm
-
-```sh
-docker exec -it keycloak \
-  /opt/keycloak/bin/kcadm.sh update realms/master \
-  -s sslRequired=NONE
-```
+These settings ensure Keycloak correctly handles HTTPS requests forwarded by Nginx.
 
 ## Access Keycloak
 
-- **URL**: http://localhost:8080
+### Production (via HTTPS)
+- **URL**: https://naic-kc.ashen.no
+- **Admin Console**: https://naic-kc.ashen.no/admin
 - **Admin Username**: admin
 - **Admin Password**: <naic-admin-password>
+
+### Local Development (Docker host only)
+- **URL**: http://localhost:8080
+- **Note**: This is only accessible from the server itself, not externally
 
 ## Stopping Keycloak
 
@@ -69,6 +81,41 @@ To stop and remove all data (including volumes):
 docker compose down -v
 ```
 
+⚠️ **Warning**: Using `-v` will delete all Keycloak data including realms, clients, and users!
+
 ## Data Persistence
 
 Keycloak data is persisted in the `keycloak-data` Docker volume defined in [docker-compose.yml](docker-compose.yml).
+
+To backup data:
+```sh
+docker run --rm -v keycloak-data:/data -v $(pwd):/backup alpine tar czf /backup/keycloak-backup.tar.gz /data
+```
+
+To restore data:
+```sh
+docker run --rm -v keycloak-data:/data -v $(pwd):/backup alpine tar xzf /backup/keycloak-backup.tar.gz -C /
+```
+
+## Troubleshooting
+
+### Cannot access Keycloak via HTTPS
+1. Verify Nginx is running: `sudo systemctl status nginx`
+2. Check Nginx configuration: `sudo nginx -t`
+3. Review Nginx logs: `sudo tail -f /var/log/nginx/error.log`
+4. Ensure Keycloak is running: `docker compose ps`
+
+### SSL Certificate Issues
+1. Verify certificate is valid: `sudo certbot certificates`
+2. Test renewal: `sudo certbot renew --dry-run`
+3. Check certificate files exist in `/etc/letsencrypt/live/naic-kc.ashen.no/`
+
+### Redirect or Login Issues
+1. Verify `KC_HOSTNAME` matches your domain exactly
+2. Check Keycloak logs: `docker compose logs -f keycloak`
+3. Ensure client redirect URIs in Keycloak admin use HTTPS URLs
+
+## Related Documentation
+
+- [SSL_SETUP.md](SSL_SETUP.md) - Complete SSL setup guide
+- [docker-compose.yml](docker-compose.yml) - Docker configuration

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Keycloak Protected API")
 
 # Keycloak configuration
-KEYCLOAK_URL = "http://158.39.75.110"
+KEYCLOAK_URL = "https://naic-kc.ashen.no"
 REALM = "naic-monitor"
 JWKS_URL = f"{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/certs"
 ISSUER = f"{KEYCLOAK_URL}/realms/{REALM}"
